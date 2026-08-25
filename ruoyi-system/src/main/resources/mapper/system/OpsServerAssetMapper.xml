@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.OpsServerAssetMapper">
+
+    <resultMap type="com.ruoyi.system.domain.OpsServerAsset" id="OpsServerAssetResult">
+        <id     property="serverId"      column="server_id"      />
+        <result property="serverName"    column="server_name"    />
+        <result property="serverIp"      column="server_ip"      />
+        <result property="osType"        column="os_type"        />
+        <result property="cpuCore"       column="cpu_core"       />
+        <result property="memorySize"    column="memory_size"    />
+        <result property="diskSize"      column="disk_size"      />
+        <result property="serverStatus"  column="server_status"  />
+        <result property="owner"         column="owner"          />
+        <result property="createBy"      column="create_by"      />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"      column="update_by"      />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"        column="remark"         />
+    </resultMap>
+
+    <sql id="selectServerAssetVo">
+        select server_id, server_name, server_ip, os_type, cpu_core, memory_size, disk_size,
+        server_status, owner, create_by, create_time, update_by, update_time, remark
+        from ops_server_asset
+    </sql>
+
+    <select id="selectServerAssetAll" resultMap="OpsServerAssetResult">
+        <include refid="selectServerAssetVo"/>
+        order by server_name
+    </select>
+
+    <select id="selectServerAssetList" parameterType="com.ruoyi.system.domain.OpsServerAsset" resultMap="OpsServerAssetResult">
+        <include refid="selectServerAssetVo"/>
+        <where>
+            <if test="serverName != null and serverName != ''">
+                and server_name like concat('%', #{serverName}, '%')
+            </if>
+            <if test="serverIp != null and serverIp != ''">
+                and server_ip like concat('%', #{serverIp}, '%')
+            </if>
+            <if test="osType != null and osType != ''">
+                and os_type = #{osType}
+            </if>
+            <if test="serverStatus != null and serverStatus != ''">
+                and server_status = #{serverStatus}
+            </if>
+            <if test="owner != null and owner != ''">
+                and owner like concat('%', #{owner}, '%')
+            </if>
+        </where>
+        order by server_name
+    </select>
+
+    <select id="selectServerAssetById" parameterType="Long" resultMap="OpsServerAssetResult">
+        <include refid="selectServerAssetVo"/>
+        where server_id = #{serverId}
+    </select>
+
+    <select id="checkServerIpUnique" parameterType="String" resultMap="OpsServerAssetResult">
+        <include refid="selectServerAssetVo"/>
+        where server_ip = #{serverIp}
+    </select>
+
+    <insert id="insertServerAsset" parameterType="com.ruoyi.system.domain.OpsServerAsset" useGeneratedKeys="true" keyProperty="serverId">
+        insert into ops_server_asset (
+        server_name, server_ip, os_type, cpu_core, memory_size, disk_size,
+        server_status, owner, create_by, create_time, update_by, update_time, remark
+        ) values (
+        #{serverName}, #{serverIp}, #{osType}, #{cpuCore}, #{memorySize}, #{diskSize},
+        #{serverStatus}, #{owner}, #{createBy}, sysdate(), #{updateBy}, sysdate(), #{remark}
+        )
+    </insert>
+
+    <update id="updateServerAsset" parameterType="com.ruoyi.system.domain.OpsServerAsset">
+        update ops_server_asset
+        <set>
+            <if test="serverName != null and serverName != ''">server_name = #{serverName},</if>
+            <if test="serverIp != null and serverIp != ''">server_ip = #{serverIp},</if>
+            <if test="osType != null and osType != ''">os_type = #{osType},</if>
+            <if test="cpuCore != null">cpu_core = #{cpuCore},</if>
+            <if test="memorySize != null">memory_size = #{memorySize},</if>
+            <if test="diskSize != null">disk_size = #{diskSize},</if>
+            <if test="serverStatus != null and serverStatus != ''">server_status = #{serverStatus},</if>
+            <if test="owner != null and owner != ''">owner = #{owner},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            update_time = sysdate(),
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        where server_id = #{serverId}
+    </update>
+
+    <delete id="deleteServerAssetById" parameterType="Long">
+        delete from ops_server_asset where server_id = #{serverId}
+    </delete>
+
+    <delete id="deleteServerAssetByIds" parameterType="Long[]">
+        delete from ops_server_asset where server_id in
+        <foreach collection="array" item="serverId" open="(" separator="," close=")">
+            #{serverId}
+        </foreach>
+    </delete>
+</mapper>

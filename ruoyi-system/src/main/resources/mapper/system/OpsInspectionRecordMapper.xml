@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.OpsInspectionRecordMapper">
+
+    <resultMap type="com.ruoyi.system.domain.OpsInspectionRecord" id="OpsInspectionRecordResult">
+        <id     property="recordId"      column="record_id"      />
+        <result property="serverId"      column="server_id"      />
+        <result property="serverName"    column="server_name"    />
+        <result property="serverIp"      column="server_ip"      />
+        <result property="checkTime"     column="check_time"     />
+        <result property="cpuUsage"      column="cpu_usage"      />
+        <result property="memoryUsage"   column="memory_usage"   />
+        <result property="diskUsage"     column="disk_usage"     />
+        <result property="checkStatus"   column="check_status"   />
+        <result property="problemDesc"   column="problem_desc"   />
+        <result property="checkUser"     column="check_user"     />
+        <result property="createBy"      column="create_by"      />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"      column="update_by"      />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"        column="remark"         />
+    </resultMap>
+
+    <sql id="selectInspectionRecordVo">
+        select r.record_id, r.server_id, s.server_name, s.server_ip, r.check_time,
+        r.cpu_usage, r.memory_usage, r.disk_usage, r.check_status, r.problem_desc,
+        r.check_user, r.create_by, r.create_time, r.update_by, r.update_time, r.remark
+        from ops_inspection_record r
+        left join ops_server_asset s on s.server_id = r.server_id
+    </sql>
+
+    <select id="selectInspectionRecordList" parameterType="com.ruoyi.system.domain.OpsInspectionRecord" resultMap="OpsInspectionRecordResult">
+        <include refid="selectInspectionRecordVo"/>
+        <where>
+            <if test="serverId != null">
+                AND r.server_id = #{serverId}
+            </if>
+            <if test="serverName != null and serverName != ''">
+                AND s.server_name like concat('%', #{serverName}, '%')
+            </if>
+            <if test="checkStatus != null and checkStatus != ''">
+                AND r.check_status = #{checkStatus}
+            </if>
+            <if test="checkUser != null and checkUser != ''">
+                AND r.check_user like concat('%', #{checkUser}, '%')
+            </if>
+        </where>
+        order by r.check_time desc, r.record_id desc
+    </select>
+
+    <select id="selectInspectionRecordById" parameterType="Long" resultMap="OpsInspectionRecordResult">
+        <include refid="selectInspectionRecordVo"/>
+        where r.record_id = #{recordId}
+    </select>
+
+    <select id="countInspectionRecordByServerId" parameterType="Long" resultType="int">
+        select count(1) from ops_inspection_record where server_id = #{serverId}
+    </select>
+
+    <insert id="insertInspectionRecord" parameterType="com.ruoyi.system.domain.OpsInspectionRecord" useGeneratedKeys="true" keyProperty="recordId">
+        insert into ops_inspection_record (
+        server_id, check_time, cpu_usage, memory_usage, disk_usage,
+        check_status, problem_desc, check_user, create_by, create_time,
+        update_by, update_time, remark
+        ) values (
+        #{serverId}, #{checkTime}, #{cpuUsage}, #{memoryUsage}, #{diskUsage},
+        #{checkStatus}, #{problemDesc}, #{checkUser}, #{createBy}, sysdate(),
+        #{updateBy}, sysdate(), #{remark}
+        )
+    </insert>
+
+    <update id="updateInspectionRecord" parameterType="com.ruoyi.system.domain.OpsInspectionRecord">
+        update ops_inspection_record
+        <set>
+            <if test="serverId != null">server_id = #{serverId},</if>
+            <if test="checkTime != null">check_time = #{checkTime},</if>
+            <if test="cpuUsage != null">cpu_usage = #{cpuUsage},</if>
+            <if test="memoryUsage != null">memory_usage = #{memoryUsage},</if>
+            <if test="diskUsage != null">disk_usage = #{diskUsage},</if>
+            <if test="checkStatus != null and checkStatus != ''">check_status = #{checkStatus},</if>
+            <if test="problemDesc != null">problem_desc = #{problemDesc},</if>
+            <if test="checkUser != null">check_user = #{checkUser},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            update_time = sysdate(),
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        where record_id = #{recordId}
+    </update>
+
+    <delete id="deleteInspectionRecordById" parameterType="Long">
+        delete from ops_inspection_record where record_id = #{recordId}
+    </delete>
+
+    <delete id="deleteInspectionRecordByIds" parameterType="Long[]">
+        delete from ops_inspection_record where record_id in
+        <foreach collection="array" item="recordId" open="(" separator="," close=")">
+            #{recordId}
+        </foreach>
+    </delete>
+</mapper>

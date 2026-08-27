@@ -70,17 +70,16 @@ stage('构建前端') {
             }
         }
 
-        stage('部署到本机 Docker Compose') {
-            steps {
-                sh '''
-                    cd ${DEPLOY_DIR}
-                    docker compose pull
-                    docker compose up -d
-                    docker compose ps
-                '''
-            }
-        }
+stage('部署到本机 Docker Compose') {
+    steps {
+        sh """
+            docker compose -f ${DEPLOY_DIR}/docker-compose.yml pull
+            docker compose -f ${DEPLOY_DIR}/docker-compose.yml up -d
+            docker compose -f ${DEPLOY_DIR}/docker-compose.yml ps
+        """
     }
+}
+
 
     post {
         success {

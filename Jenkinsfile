@@ -26,14 +26,14 @@ stage('构建后端') {
 }
 
 stage('构建前端') {
+    agent {
+        docker {
+            image: 'node:20-alpine'
+            reuseNode: true
+        }
+    }
     steps {
         dir('ruoyi-ui') {
-            agent {
-                docker {
-                    image: 'node:20-alpine'
-                    reuseNode: true
-                }
-            }
             sh '''
                 npm install --registry=https://registry.npmmirror.com
                 npm run build:prod
@@ -41,6 +41,7 @@ stage('构建前端') {
         }
     }
 }
+
 
 
         stage('构建 Docker 镜像') {

@@ -54,12 +54,19 @@ docker stop node-build
         stage('构建 Docker 镜像') {
             steps {
                 sh '''
-ls -la
-ls -la docker
-docker build -t 192.168.26.129:8082/edu/ruoyi-backend:3.9.2 -f docker/backend/Dockerfile .
+# 临时生成后端Dockerfile
+cat > Dockerfile.backend <<'EOF'
+FROM openjdk:17-jdk-slim
+WORKDIR /app
+COPY target/ruoyi-admin.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java","-jar","app.jar"]
+EOF
+docker build -t 192.168.26.129:8082/edu/ruoyi-backend:3.9.2 -f Dockerfile.backend .
 '''
             }
         }
+
 
 
         stage('推送镜像到 Harbor') {

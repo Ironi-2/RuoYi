@@ -20,7 +20,8 @@ stage('构建后端') {
             -v $(pwd):/app \
             -w /app \
             maven:3.9-eclipse-temurin-17 \
-            sh -c "cat > /usr/share/maven/conf/settings.xml << 'EOF'
+            mvn clean package -DskipTests \
+            -s <(cat <<'XML'
 <settings>
   <mirrors>
     <mirror>
@@ -30,8 +31,8 @@ stage('构建后端') {
     </mirror>
   </mirrors>
 </settings>
-EOF
-mvn clean package -DskipTests"
+XML
+)
         '''
     }
 }

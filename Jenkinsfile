@@ -68,29 +68,32 @@ pipeline {
             }
         }
 
-        // 使用 ssh 访问宿主机 192.168.26.129（真实宿主机IP，不要写127.0.0.1）
         stage('部署到本机 Docker Compose') {
             steps {
-                withCredentials([string(credentialsId: 'root-pwd', variable: 'ROOT_PWD')]) {
-                    sh '''
-                        apk add --no-cache sshpass
-                        sshpass -p "${ROOT_PWD}" ssh -o StrictHostKeyChecking=no root@192.168.26.129 << EOF
+                sshPublisher(publishers: [
+                    sshPublisherDesc(
+                        configName: 'local-server',
+                        transfers: [
+                            sshTransfer(
+                                command: '''
 cd /opt/ruoyi/ruoyi/docker-ruoyi
 docker compose pull
 docker compose up -d
 docker compose ps
-EOF
-                    '''
-                }
+'''
+                            )
+                        ]
+                    )
+                ])
             }
         }
     }
     post {
         success {
-            echo '发布成功：RuoYi 已经通过 Jenkins 自动部署完成'
+            echo '✅发布成功：RuoYi 已经通过 Jenkins 自动部署完成'
         }
         failure {
-            echo '发布失败：请查看 Jenkins 控制台日志'
+            echo '❌发布失败：请查看 Jenkins 控制台日志'
         }
     }
 }

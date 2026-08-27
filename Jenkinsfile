@@ -4,6 +4,9 @@ pipeline {
         HARBOR_URL = "192.168.26.129:8082"
         IMAGE_NAME = "edu/ruoyi-backend"
         IMAGE_TAG  = "3.9.2"
+        // harbor账号密码，替换成你真实账号
+        HARBOR_USER = "admin"
+        HARBOR_PWD  = "Harbor12345"
     }
     stages {
         stage('拉取代码') {
@@ -15,63 +18,53 @@ pipeline {
         stage('构建后端') {
             steps {
                 sh '''
-# 启动maven容器，后台运行
-docker run --rm -d --name mvn-build maven:3.9-eclipse-temurin-17 sleep 3600
-# 把当前目录全部源码复制进容器内部
+# 清理残留容器
+docker rm -f mvn-build || true
+# 增加DNS防止maven域名解析失败
+docker run --rm -d --name mvn-build --dns 223.5.5.5 --dns 8.8.8.8 maven:3.9-eclipse-temurin-17 sleep 3600
 docker cp . mvn-build:/app
-# 在容器内执行编译
 docker exec -w /app mvn-build mvn clean package -DskipTests -Dmirror.central.url=https://maven.aliyun.com/repository/public
-# 把编译产出target文件夹复制回jenkins工作目录
 docker cp mvn-build:/app/ruoyi-admin/target .
-# 停止容器
 docker stop mvn-build
 '''
             }
         }
 
-
-
-
         stage('构建前端') {
             steps {
                 sh '''
-# 启动node容器后台运行
+docker rm -f node-build || true
 docker run --rm -d --name node-build node:18-alpine sleep 3600
-# 拷贝ruoyi‑ui源码进容器
 docker cp ruoyi-ui node-build:/app
-# 容器内执行npm install + build
 docker exec -w /app node-build npm install --registry=https://registry.npmmirror.com
 docker exec -w /app node-build npm run build:prod
-# 把打包好的dist目录拷贝回jenkins工作空间
 docker cp node-build:/app/dist .
-# 清理容器
 docker stop node-build
 '''
             }
         }
 
-
         stage('构建 Docker 镜像') {
             steps {
                 sh '''
-# 临时生成后端Dockerfile
-cat > Dockerfile.backend <<'EOF'
-FROM openjdk:17-jdk-slim
+# 使用阿里云镜像源，避免dockerhub拉取卡死
+cat > Dockerfile.backend <<EOF
+FROM registry.aliyuncs.com/library/openjdk:17-jdk-slim
 WORKDIR /app
-COPY target/ruoyi-admin.jar app.jar
+COPY target/*.jar app.jar
 EXPOSE 8080
 ENTRYPOINT ["java","-jar","app.jar"]
 EOF
-docker build -t 192.168.26.129:8082/edu/ruoyi-backend:3.9.2 -f Dockerfile.backend .
+docker build -t ${HARBOR_URL}/${IMAGE_NAME}:${IMAGE_TAG} -f Dockerfile.backend .
 '''
             }
         }
 
-
-
         stage('推送镜像到 Harbor') {
             steps {
                 sh '''
+# 登录harbor，必须登录才能推送
+docker login ${HARBOR_URL} -u ${HARBOR_USER} -p ${HARBOR_PWD}
 docker push ${HARBOR_URL}/${IMAGE_NAME}:${IMAGE_TAG}
 '''
             }

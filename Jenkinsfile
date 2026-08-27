@@ -34,14 +34,22 @@ docker stop mvn-build
 
         stage('构建前端') {
             steps {
-                dir("ruoyi-ui") {
-                    sh '''
-npm install --registry=https://registry.npmmirror.com/
-npm run build:prod
+                sh '''
+# 启动node容器后台运行
+docker run --rm -d --name node-build node:18-alpine sleep 3600
+# 拷贝ruoyi‑ui源码进容器
+docker cp ruoyi-ui node-build:/app
+# 容器内执行npm install + build
+docker exec -w /app node-build npm install --registry=https://registry.npmmirror.com
+docker exec -w /app node-build npm run build:prod
+# 把打包好的dist目录拷贝回jenkins工作空间
+docker cp node-build:/app/dist .
+# 清理容器
+docker stop node-build
 '''
-                }
             }
         }
+
 
         stage('构建 Docker 镜像') {
             steps {

@@ -41,11 +41,11 @@ docker stop node-build
             }
         }
 
-        stage('构建 Docker 镜像') {
-            steps {
-                sh '''
+stage('构建 Docker 镜像') {
+    steps {
+        sh '''
 cat > Dockerfile.backend <<EOF
-FROM registry.aliyuncs.com/library/openjdk:17-jdk-slim
+FROM openjdk:17-jdk-slim
 WORKDIR /app
 COPY target/*.jar app.jar
 EXPOSE 8080
@@ -53,8 +53,9 @@ ENTRYPOINT ["java","-jar","app.jar"]
 EOF
 docker build -t ${HARBOR_URL}/${IMAGE_NAME}:${IMAGE_TAG} -f Dockerfile.backend .
 '''
-            }
-        }
+    }
+}
+
 
         stage('推送镜像到 Harbor') {
             steps {

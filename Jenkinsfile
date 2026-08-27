@@ -12,15 +12,23 @@ pipeline {
             }
         }
 
-stage('构建后端') {
+        stage('构建后端') {
             steps {
                 sh '''
-pwd
-ls -la pom.xml
-mvn clean package -DskipTests -Dmaven.repo.local=.m2/repository -Dmirror.central.url=https://maven.aliyun.com/repository/public
+# 启动maven容器，后台运行
+docker run --rm -d --name mvn-build maven:3.9-eclipse-temurin-17 sleep 3600
+# 把当前目录全部源码复制进容器内部
+docker cp . mvn-build:/app
+# 在容器内执行编译
+docker exec -w /app mvn-build mvn clean package -DskipTests -Dmirror.central.url=https://maven.aliyun.com/repository/public
+# 把编译产出target文件夹复制回jenkins工作目录
+docker cp mvn-build:/app/ruoyi-admin/target .
+# 停止容器
+docker stop mvn-build
 '''
             }
         }
+
 
 
 

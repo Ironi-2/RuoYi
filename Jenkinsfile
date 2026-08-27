@@ -28,8 +28,8 @@ stage('构建后端') {
 stage('构建前端') {
     agent {
         docker {
-            image: 'node:20-alpine'
-            reuseNode: true
+            image 'node:20-alpine'
+            reuseNode true
         }
     }
     steps {
@@ -41,6 +41,7 @@ stage('构建前端') {
         }
     }
 }
+
 
 
 

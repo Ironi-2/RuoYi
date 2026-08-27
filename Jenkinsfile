@@ -15,8 +15,8 @@ pipeline {
         stage('构建后端') {
             steps {
                 sh '''
-docker run --rm --user root -v $(pwd):/app -w /app maven:3.9-eclipse-temurin-17 ls -la /app
-docker run --rm --user root -v $(pwd):/app -w /app \
+docker run --rm --user root -v /var/jenkins_home/workspace/step1:/app -w /app maven:3.9-eclipse-temurin-17 ls -la /app
+docker run --rm --user root -v /var/jenkins_home/workspace/step1:/app -w /app \
     -e MAVEN_OPTS="-Dmaven.repo.local=/app/.m2/repository" \
     maven:3.9-eclipse-temurin-17 \
     mvn clean package -DskipTests \
@@ -25,6 +25,7 @@ docker run --rm --user root -v $(pwd):/app -w /app \
 '''
             }
         }
+
 
 
         stage('构建前端') {

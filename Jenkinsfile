@@ -68,15 +68,20 @@ pipeline {
             }
         }
 
-        // ========== 已删除 sshpass，直接操作宿主机docker ==========
+        // 使用 ssh 访问宿主机 192.168.26.129（真实宿主机IP，不要写127.0.0.1）
         stage('部署到本机 Docker Compose') {
             steps {
-                sh """
-                    cd ${DEPLOY_DIR}
-                    docker compose pull
-                    docker compose up -d
-                    docker compose ps
-                """
+                withCredentials([string(credentialsId: 'root-pwd', variable: 'ROOT_PWD')]) {
+                    sh '''
+                        apk add --no-cache sshpass
+                        sshpass -p "${ROOT_PWD}" ssh -o StrictHostKeyChecking=no root@192.168.26.129 << EOF
+cd /opt/ruoyi/ruoyi/docker-ruoyi
+docker compose pull
+docker compose up -d
+docker compose ps
+EOF
+                    '''
+                }
             }
         }
     }

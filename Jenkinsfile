@@ -68,15 +68,14 @@ pipeline {
             }
         }
 
+        // ========== 已删除 sshpass，直接操作宿主机docker ==========
         stage('部署到本机 Docker Compose') {
             steps {
                 sh """
-                    sshpass -p "@zz050921" ssh -o StrictHostKeyChecking=no root@127.0.0.1 << EOF
-cd /opt/ruoyi/ruoyi/docker-ruoyi
-docker compose pull
-docker compose up -d
-docker compose ps
-EOF
+                    cd ${DEPLOY_DIR}
+                    docker compose pull
+                    docker compose up -d
+                    docker compose ps
                 """
             }
         }

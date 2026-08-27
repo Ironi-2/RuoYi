@@ -16,13 +16,14 @@ pipeline {
             }
         }
 
-        stage('构建后端') {
-            steps {
-                sh '''
-                    mvn clean package -DskipTests
-                '''
-            }
-        }
+stage('构建后端') {
+    agent {
+        docker { image 'maven:3.9-eclipse-temurin-17' }
+    }
+    steps {
+        sh 'mvn clean package -DskipTests'
+    }
+}
 
         stage('构建前端') {
             steps {

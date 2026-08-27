@@ -57,14 +57,17 @@ docker build -t ${HARBOR_URL}/${IMAGE_NAME}:${IMAGE_TAG} -f Dockerfile.backend .
 }
 
 
-        stage('推送镜像到 Harbor') {
-            steps {
-                sh '''
+stage('推送镜像到 Harbor') {
+    steps {
+        sh '''
+export DOCKER_CONFIG=$(pwd)/.docker
+mkdir -p ${DOCKER_CONFIG}
 docker login ${HARBOR_URL} -u ${HARBOR_USER} -p ${HARBOR_PWD}
 docker push ${HARBOR_URL}/${IMAGE_NAME}:${IMAGE_TAG}
 '''
-            }
-        }
+    }
+}
+
 
         stage('部署到本机 Docker Compose') {
             steps {

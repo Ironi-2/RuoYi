@@ -73,7 +73,7 @@ pipeline {
                 script {
                     sshPublisher(publishers: [
                         sshPublisherDesc(
-                            configName: 'local-server',
+                            configName: 'local‑server',
                             transfers: [
                                 sshTransfer(
                                     execCommand: '''

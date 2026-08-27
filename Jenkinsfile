@@ -13,17 +13,29 @@ pipeline {
             }
         }
 
-        stage('构建后端') {
-            steps {
-                sh '''
-                docker run --rm \
-                    -v $(pwd):/app \
-                    -w /app \
-                    maven:3.9-eclipse-temurin-17 \
-                    mvn clean package -DskipTests
-                '''
-            }
-        }
+stage('构建后端') {
+    steps {
+        sh '''
+        docker run --rm \
+            -v $(pwd):/app \
+            -w /app \
+            maven:3.9-eclipse-temurin-17 \
+            sh -c "cat > /usr/share/maven/conf/settings.xml << 'EOF'
+<settings>
+  <mirrors>
+    <mirror>
+      <id>aliyunmaven</id>
+      <mirrorOf>central</mirrorOf>
+      <url>https://maven.aliyun.com/repository/public</url>
+    </mirror>
+  </mirrors>
+</settings>
+EOF
+mvn clean package -DskipTests"
+        '''
+    }
+}
+
 
         stage('构建前端') {
             steps {

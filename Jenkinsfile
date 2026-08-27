@@ -71,9 +71,12 @@ pipeline {
         stage('部署到本机 Docker Compose') {
             steps {
                 sh """
-                    /usr/local/bin/docker-compose -f ${DEPLOY_DIR}/docker-compose.yml pull
-                    /usr/local/bin/docker-compose -f ${DEPLOY_DIR}/docker-compose.yml up -d
-                    /usr/local/bin/docker-compose -f ${DEPLOY_DIR}/docker-compose.yml ps
+                    sshpass -p "@zz050921" ssh -o StrictHostKeyChecking=no root@127.0.0.1 << EOF
+cd /opt/ruoyi/ruoyi/docker-ruoyi
+docker compose pull
+docker compose up -d
+docker compose ps
+EOF
                 """
             }
         }

@@ -1,12 +1,14 @@
 pipeline {
     agent any
+
     environment {
-        HARBOR_URL = "192.168.26.129:8082"
-        IMAGE_NAME = "ruoyi/ruoyi-backend"
-        IMAGE_TAG  = "3.9.2"
-        HARBOR_USER = "admin"
-        HARBOR_PWD  = "Harbor12345"
+        HARBOR_HOST = '192.168.26.129:8082'
+        HARBOR_PROJECT = 'ruoyi'
+        BACKEND_IMAGE = "${HARBOR_HOST}/${HARBOR_PROJECT}/ruoyi-backend:3.9.2"
+        FRONTEND_IMAGE = "${HARBOR_HOST}/${HARBOR_PROJECT}/ruoyi-frontend:3.9.2"
+        DEPLOY_DIR = '/opt/ruoyi/ruoyi/docker-ruoyi'
     }
+
     stages {
         stage('拉取代码') {
             steps {
@@ -17,75 +19,65 @@ pipeline {
         stage('构建后端') {
             steps {
                 sh '''
-docker rm -f mvn-build || true
-docker run --rm -d --name mvn-build --dns 223.5.5.5 --dns 8.8.8.8 maven:3.9-eclipse-temurin-17 sleep 3600
-docker cp . mvn-build:/app
-docker exec -w /app mvn-build mvn clean package -DskipTests -Dmirror.central.url=https://maven.aliyun.com/repository/public
-docker cp mvn-build:/app/ruoyi-admin/target .
-docker stop mvn-build
-'''
+                    mvn clean package -DskipTests
+                '''
             }
         }
 
         stage('构建前端') {
             steps {
-                sh '''
-docker rm -f node-build || true
-docker run --rm -d --name node-build node:18-alpine sleep 3600
-docker cp ruoyi-ui node-build:/app
-docker exec -w /app node-build npm install --registry=https://registry.npmmirror.com
-docker exec -w /app node-build npm run build:prod
-docker cp node-build:/app/dist .
-docker stop node-build
-'''
+                dir('ruoyi-ui') {
+                    sh '''
+                        npm install --registry=https://registry.npmmirror.com
+                        npm run build:prod
+                    '''
+                }
             }
         }
 
-stage('构建 Docker 镜像') {
-    steps {
-        sh '''
-cat > Dockerfile.backend <<EOF
-FROM openjdk:17-jdk-slim
-WORKDIR /app
-COPY target/*.jar app.jar
-EXPOSE 8080
-ENTRYPOINT ["java","-jar","app.jar"]
-EOF
-docker build -t ${HARBOR_URL}/${IMAGE_NAME}:${IMAGE_TAG} -f Dockerfile.backend .
-'''
-    }
-}
+        stage('构建 Docker 镜像') {
+            steps {
+                sh '''
+                    docker build -t ${BACKEND_IMAGE} -f Dockerfile .
+                    docker build -t ${FRONTEND_IMAGE} -f ruoyi-ui/Dockerfile ruoyi-ui
+                '''
+            }
+        }
 
-
-stage('推送镜像到 Harbor') {
-    steps {
-        sh '''
-export DOCKER_CONFIG=$(pwd)/.docker
-mkdir -p ${DOCKER_CONFIG}
-docker login ${HARBOR_URL} -u ${HARBOR_USER} -p ${HARBOR_PWD}
-docker push ${HARBOR_URL}/${IMAGE_NAME}:${IMAGE_TAG}
-'''
-    }
-}
-
+        stage('推送镜像到 Harbor') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'harbor-admin',
+                    usernameVariable: 'HARBOR_USER',
+                    passwordVariable: 'HARBOR_PASS'
+                )]) {
+                    sh '''
+                        echo "${HARBOR_PASS}" | docker login ${HARBOR_HOST} -u "${HARBOR_USER}" --password-stdin
+                        docker push ${BACKEND_IMAGE}
+                        docker push ${FRONTEND_IMAGE}
+                    '''
+                }
+            }
+        }
 
         stage('部署到本机 Docker Compose') {
             steps {
                 sh '''
-cd docker-ruoyi
-docker compose down
-docker compose up -d
-'''
+                    cd ${DEPLOY_DIR}
+                    docker compose pull
+                    docker compose up -d
+                    docker compose ps
+                '''
             }
         }
     }
 
     post {
         success {
-            echo "✅流水线全部执行成功，应用已部署完成"
+            echo '发布成功：RuoYi 已经通过 Jenkins 自动部署完成'
         }
         failure {
-            echo "❌发布失败：请查看 Jenkins 控制台日志"
+            echo '发布失败：请查看 Jenkins 控制台日志'
         }
     }
 }

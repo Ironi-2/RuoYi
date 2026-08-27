@@ -70,21 +70,23 @@ pipeline {
 
         stage('部署到本机 Docker Compose') {
             steps {
-                sshPublisher(publishers: [
-                    sshPublisherDesc(
-                        configName: 'local-server',
-                        transfers: [
-                            sshTransfer(
-                                command: '''
+                script {
+                    sshPublisher(publishers: [
+                        sshPublisherDesc(
+                            configName: 'local-server',
+                            transfers: [
+                                sshTransfer(
+                                    execCommand: '''
 cd /opt/ruoyi/ruoyi/docker-ruoyi
 docker compose pull
 docker compose up -d
 docker compose ps
 '''
-                            )
-                        ]
-                    )
-                ])
+                                )
+                            ]
+                        )
+                    ])
+                }
             }
         }
     }

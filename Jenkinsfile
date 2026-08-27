@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        HARBOR_URL = "100.83.145.91:8082"
+        HARBOR_URL = "192.168.26.129:8082"
         IMAGE_NAME = "edu/ruoyi-backend"
         IMAGE_TAG  = "3.9.2"
     }
@@ -16,6 +16,7 @@ pipeline {
             steps {
                 sh '''
 docker run --rm \
+    --user root \
     -v $(pwd):/app \
     -w /app \
     -e MAVEN_OPTS="-Dmaven.repo.local=/app/.m2/repository" \

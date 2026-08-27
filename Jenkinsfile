@@ -71,9 +71,9 @@ pipeline {
         stage('部署到本机 Docker Compose') {
             steps {
                 sh """
-                    docker compose -f ${DEPLOY_DIR}/docker-compose.yml pull
-                    docker compose -f ${DEPLOY_DIR}/docker-compose.yml up -d
-                    docker compose -f ${DEPLOY_DIR}/docker-compose.yml ps
+                    docker-compose -f ${DEPLOY_DIR}/docker-compose.yml pull
+                    docker-compose -f ${DEPLOY_DIR}/docker-compose.yml up -d
+                    docker-compose -f ${DEPLOY_DIR}/docker-compose.yml ps
                 """
             }
         }

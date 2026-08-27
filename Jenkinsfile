@@ -16,12 +16,7 @@ pipeline {
 stage('构建后端') {
     steps {
         sh '''
-        docker run --rm \
-            -v $(pwd):/app \
-            -w /app \
-            maven:3.9-eclipse-temurin-17 \
-            mvn clean package -DskipTests \
-            -s <(cat <<'XML'
+cat > settings.xml <<'XML'
 <settings>
   <mirrors>
     <mirror>
@@ -32,10 +27,16 @@ stage('构建后端') {
   </mirrors>
 </settings>
 XML
-)
-        '''
+
+docker run --rm \
+    -v $(pwd):/app \
+    -w /app \
+    maven:3.9-eclipse-temurin-17 \
+    mvn clean package -DskipTests -s /app/settings.xml
+'''
     }
 }
+
 
 
         stage('构建前端') {

@@ -68,16 +68,16 @@ pipeline {
             }
         }
 
-        stage('部署到本机 Docker Compose') {
-            steps {
-                sh """
-                    docker-compose -f ${DEPLOY_DIR}/docker-compose.yml pull
-                    docker-compose -f ${DEPLOY_DIR}/docker-compose.yml up -d
-                    docker-compose -f ${DEPLOY_DIR}/docker-compose.yml ps
-                """
-            }
-        }
+stage('部署到本机 Docker Compose') {
+    steps {
+        sh """
+            /usr/local/bin/docker-compose -f ${DEPLOY_DIR}/docker-compose.yml pull
+            /usr/local/bin/docker-compose -f ${DEPLOY_DIR}/docker-compose.yml up -d
+            /usr/local/bin/docker-compose -f ${DEPLOY_DIR}/docker-compose.yml ps
+        """
     }
+}
+
     post {
         success {
             echo '发布成功：RuoYi 已经通过 Jenkins 自动部署完成'

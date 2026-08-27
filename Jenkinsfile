@@ -46,8 +46,10 @@ pipeline {
         stage('构建 Docker 镜像') {
             steps {
                 sh """
-                    docker build -t ${BACKEND_IMAGE} -f Dockerfile .
-                    docker build -t ${FRONTEND_IMAGE} -f ruoyi-ui/Dockerfile ruoyi-ui
+                # 后端：Dockerfile 在 ruoyi-admin，构建上下文 ruoyi-admin
+                docker build -t ${BACKEND_IMAGE} -f ruoyi-admin/Dockerfile ruoyi-admin
+                # 前端不变
+                docker build -t ${FRONTEND_IMAGE} -f ruoyi-ui/Dockerfile ruoyi-ui
                 """
             }
         }
@@ -78,10 +80,11 @@ pipeline {
                                 sshTransfer(
                                     execCommand: '''
 cd /opt/ruoyi/ruoyi/docker-ruoyi
+docker compose down
 docker compose pull
 docker compose up -d
 docker compose ps
-'''
+                                    '''
                                 )
                             ]
                         )
